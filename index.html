@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Feed with Delayed Effect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+        }
+
+        .video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        video, canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+
+        canvas {
+            opacity: 0.5;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 200px;
+            height: 20px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        /* Thumb styles */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            border: 2px solid #666;
+            margin-top: -10px; /* Centers the thumb */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            border: 2px solid #666;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Track styles */
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+
+        /* Active state */
+        input[type="range"]:active::-webkit-slider-thumb {
+            background: #eee;
+            transform: scale(1.1);
+        }
+
+        input[type="range"]:active::-moz-range-thumb {
+            background: #eee;
+            transform: scale(1.1);
+        }
+
+        #delayValue {
+            min-width: 50px;
+        }
+
+        @media (max-width: 768px) {
+            input[type="range"] {
+                width: 150px;
+            }
+            
+            .controls {
+                bottom: 20px;
+                padding: 12px 20px;
+            }
+
+            /* Larger touch targets on mobile */
+            input[type="range"]::-webkit-slider-thumb {
+                width: 36px;
+                height: 36px;
+                margin-top: -13px;
+            }
+
+            input[type="range"]::-moz-range-thumb {
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <video id="normalVideo" autoplay playsinline></video>
+        <canvas id="delayedCanvas"></canvas>
+    </div>
+    <div class="controls">
+        <div class="slider-container">
+            <label for="delaySlider">Delay:</label>
+            <input type="range" id="delaySlider" min="1" max="100" value="50">
+            <span id="delayValue">1s</span>
+        </div>
+    </div>
+    <script src="camera.js"></script>
+</body>
+</html>
