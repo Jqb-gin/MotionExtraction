@@ -1,7 +1,8 @@
 // Get DOM elements
-let normalVideo = document.getElementById('normalVideo');
-let canvas = document.getElementById('delayedCanvas');
-let ctx = canvas.getContext('2d');
+let normalCanvas = document.getElementById('normalVideo');
+let delayedCanvas = document.getElementById('delayedCanvas');
+let normalCtx = normalCanvas.getContext('2d');
+let delayedCtx = delayedCanvas.getContext('2d');
 let delaySlider = document.getElementById('delaySlider');
 let delayValue = document.getElementById('delayValue');
 
@@ -10,10 +11,13 @@ let frameBuffer = [];
 let DELAY_FRAMES = 30; // default delay
 
 // Handle window resizing
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+function resizeCanvases() {
+    normalCanvas.width = window.innerWidth;
+    normalCanvas.height = window.innerHeight;
+    delayedCanvas.width = window.innerWidth;
+    delayedCanvas.height = window.innerHeight;
 }
+
 // Convert linear slider value (1-100) to logarithmic frames (1-600)
 function sliderToFrames(value) {
     // Convert to log scale: 1 to ~600 frames
@@ -56,36 +60,52 @@ async function initializeCamera() {
                 height: { ideal: window.innerHeight }
             } 
         });
-        normalVideo.srcObject = stream;
-        normalVideo.play();
+        
+        // Create a video element for capturing
+        const videoElement = document.createElement('video');
+        videoElement.srcObject = stream;
+        videoElement.play();
 
-        // Set up initial canvas size
-        resizeCanvas();
+        // Set up initial canvas sizes
+        resizeCanvases();
 
-        // Start processing frames
-        processFrames();
+        // Start processing frames using the video element
+        videoElement.onloadedmetadata = () => {
+            processFrames(videoElement);
+        };
     } catch (err) {
         console.error('Error accessing camera:', err);
     }
 }
 
-function processFrames() {
-    // Capture current frame
-    ctx.drawImage(normalVideo, 0, 0, canvas.width, canvas.height);
+function processFrames(videoElement) {
+    // Draw current frame to normal canvas first
+    normalCtx.drawImage(videoElement, 0, 0, normalCanvas.width, normalCanvas.height);
     
-    // Get image data to manipulate pixels
-    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // Get image data to store in buffer
+    let currentFrame = normalCtx.getImageData(0, 0, normalCanvas.width, normalCanvas.height);
     
     // Store frame in buffer
-    frameBuffer.push(imageData);
+    frameBuffer.push(currentFrame);
 
     // Keep buffer size limited to delay frames
     if (frameBuffer.length > DELAY_FRAMES) {
-        // Get delayed frame
-        let delayedFrame = frameBuffer.shift();
-        let delayedData = delayedFrame.data;
+        // Remove oldest frame
+        frameBuffer.shift();
+    }
 
-        // Invert colors only (no opacity change)
+    // Draw the most recent frame (from end of buffer) to normal canvas
+    if (frameBuffer.length > 0) {
+        let currentFrame = frameBuffer[frameBuffer.length - 1];
+        normalCtx.putImageData(currentFrame, 0, 0);
+    }
+
+    // Draw delayed frame (from start of buffer) with inverted colors
+    if (frameBuffer.length > 0) {
+        let delayedFrame = frameBuffer[0];
+        let delayedData = new Uint8ClampedArray(delayedFrame.data);
+
+        // Invert colors
         for (let i = 0; i < delayedData.length; i += 4) {
             delayedData[i] = 255 - delayedData[i];         // Invert red
             delayedData[i + 1] = 255 - delayedData[i + 1]; // Invert green
@@ -93,15 +113,15 @@ function processFrames() {
         }
 
         // Draw delayed frame
-        ctx.putImageData(delayedFrame, 0, 0);
+        delayedCtx.putImageData(new ImageData(delayedData, delayedFrame.width, delayedFrame.height), 0, 0);
     }
 
     // Continue processing frames
-    requestAnimationFrame(processFrames);
+    requestAnimationFrame(() => processFrames(videoElement));
 }
 
 // Handle window resize
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('resize', resizeCanvases);
 
 // Initialize when page loads
 window.addEventListener('load', initializeCamera);
