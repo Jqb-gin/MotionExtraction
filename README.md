@@ -4,3 +4,6 @@ Just watched this Youtube video and decided to implement in quickly to test it o
 https://www.youtube.com/watch?v=NSS6yAMZF78
 
 it was surprising fast to make with almost nothing to change manually.
+
+# Link
+https://jqb-gin.github.io/MotionExtraction/
